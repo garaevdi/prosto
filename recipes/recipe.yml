@@ -1,16 +1,14 @@
 ---
 # yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
 # image will be published to ghcr.io/<user>/<name>
-name: template
+name: prosto
 # description will be included in the image's metadata
-description: This is my personal OS image.
+description: Experimental OS with Fedora + Pantheon.
 
 # the base image to build on top of (FROM) and the version tag to use
-base-image: ghcr.io/ublue-os/silverblue-main
-image-version: 42 # latest is also supported if you want new updates ASAP
+base-image: ghcr.io/blue-build/base-images/fedora-base
+image-version: 43
 
-# module configuration, executed in order
-# you can include multiple instances of the same module
 modules:
   - type: files
     files:
@@ -20,15 +18,25 @@ modules:
   - type: dnf
     repos:
       copr:
-        - atim/starship
+        - garaevdi/pantheon-rpm
     install:
       packages:
-        - micro
-        - starship
+        - appcenter
+        - elementary-dock
+        - elementary-greeter
+        - elementary-settings
+        - elementary-shortcut-overlay
+        - elementary-sideload
+        - elementary-terminal
+        - elementary-files
+        - gala
+        - pantheon-agent-polkit
+        - pantheon-session-settings
+        - switchboard
+        - wingpanel
+        - xdg-desktop-portal-pantheon
     remove:
       packages:
-        # example: removing firefox (in favor of the flatpak)
-        # "firefox" is the main package, "firefox-langpacks" is a dependency
         - firefox
         - firefox-langpacks # also remove firefox dependency (not required for all packages, this is a special case)
 
@@ -40,6 +48,29 @@ modules:
         install: # system flatpaks we want all users to have and not remove
           - org.mozilla.firefox
           - org.gnome.Loupe
+      - notify: true
+        scope: system
+        repo: 
+          tilte: elementary
+          url: https://flatpak.elementary.io/repo.flatpakrepo
+        install:
+          - io.elementary.calculator
+          - io.elementary.calendar
+          - io.elementary.camera
+          - io.elementary.capnet-assist
+          - io.eleemntary.contacts
+          - io.eleemntary.iconbrowser
+          - io.elementary.mail
+          - io.elementary.maps
+          - io.elementary.music
+          - io.elementary.photos
+          - io.elementary.screenshot
+          - io.elementary.tasks
+          - io.elementary.videos
+          - org.gnome.Epiphany
+          - org.gnome.Evince
+          - org.gnome.FileRoller
+          - org.gnome.font-viewer
       - scope: user # Also add Flathub user repo, but no user packages
 
   - type: signing # this sets up the proper policy & signing files for signed images to work fully
