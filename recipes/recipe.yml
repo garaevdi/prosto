@@ -32,6 +32,7 @@ modules:
         - gala
         - pantheon-agent-polkit
         - pantheon-session-settings
+        - plymouth-theme-elementary
         - switchboard
         - wingpanel
         - xdg-desktop-portal-pantheon
@@ -73,4 +74,5 @@ modules:
           - org.gnome.font-viewer
       - scope: user # Also add Flathub user repo, but no user packages
 
+  - type: initramfs
   - type: signing # this sets up the proper policy & signing files for signed images to work fully
