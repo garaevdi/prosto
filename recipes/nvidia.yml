@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
+
+name: prosto
+description: Experimental OS with Fedora + Pantheon (nvidia-version).
+base-image: ghcr.io/blue-build/base-images/fedora-base-nvidia
+alt-tags:
+  - latest-nvidia
+image-version: 43
+modules:
+  - from-file: ../modules/common.yml
+  - type: signing

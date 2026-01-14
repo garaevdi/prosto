@@ -1,14 +1,5 @@
 ---
-# yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
-# image will be published to ghcr.io/<user>/<name>
-name: prosto
-# description will be included in the image's metadata
-description: Experimental OS with Fedora + Pantheon.
-
-# the base image to build on top of (FROM) and the version tag to use
-base-image: ghcr.io/blue-build/base-images/fedora-base
-image-version: 43
-
+# yaml-language-server: $schema=https://schema.blue-build.org/module-list-v1.json
 modules:
   - type: files
     files:
@@ -75,4 +66,3 @@ modules:
       - scope: user # Also add Flathub user repo, but no user packages
 
   - type: initramfs
-  - type: signing # this sets up the proper policy & signing files for signed images to work fully
