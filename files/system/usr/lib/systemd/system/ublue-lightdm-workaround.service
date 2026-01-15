@@ -10,7 +10,7 @@ Before=lightdm.service
 [Service]
 Type=oneshot
 RemainAfterExit=true
-ExecStart=/etc/ublue-lightdm-workaround.sh
+ExecStart=/usr/bin/ublue-lightdm-workaround.sh
 
 [Install]
 WantedBy=multi-user.target
