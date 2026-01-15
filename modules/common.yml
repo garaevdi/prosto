@@ -25,6 +25,7 @@ modules:
         - elementary-sideload
         - elementary-terminal
         - elementary-files
+        - elementary-files-portal
         - gala
         - pantheon-agent-polkit
         - pantheon-session-settings
