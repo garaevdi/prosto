@@ -2,8 +2,7 @@ name: bluebuild
 on:
   schedule:
     - cron:
-        "00 06 * * *" # build at 06:00 UTC every day
-        # (20 minutes after last ublue images start building)
+        "20 6 * * 6" # build at 06:20 UTC every saturday
   push:
     paths-ignore: # don't rebuild if only documentation has changed
       - "**.md"
