@@ -3,7 +3,7 @@
 name: prosto
 description: Experimental OS with Fedora + Pantheon (nvidia-version).
 
-base-image: ghcr.io/blue-build/base-images/fedora-base-nvidia
+base-image: ghcr.io/blue-build/base-images/fedora-base-nvidia-open
 alt-tags:
   - latest-nvidia
 image-version: 43
