@@ -9,5 +9,10 @@ alt-tags:
 image-version: 44
 
 modules:
+  - type: dnf
+    install:
+      packages:
+        - langpacks-core-en
+        - flatpak
   - from-file: ../modules/common.yml
   - type: signing
