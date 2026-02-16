@@ -24,8 +24,13 @@ modules:
     install:
       packages:
         - appcenter
+        - elementary-code
+        - elementary-calendar
         - elementary-dock
         - elementary-greeter
+        - elementary-mail
+        - elementary-monitor
+        - elementary-photos
         - elementary-settings
         - elementary-shortcut-overlay
         - elementary-sideload
@@ -56,23 +61,19 @@ modules:
           tilte: elementary
           url: https://flatpak.elementary.io/repo.flatpakrepo
         install:
-          - io.elementary.calculator
-          - io.elementary.calendar
-          - io.elementary.camera
-          - io.elementary.capnet-assist
-          - io.eleemntary.contacts
-          - io.eleemntary.iconbrowser
-          - io.elementary.mail
-          - io.elementary.maps
-          - io.elementary.music
-          - io.elementary.photos
-          - io.elementary.screenshot
-          - io.elementary.tasks
-          - io.elementary.videos
-          - org.gnome.Epiphany
-          - org.gnome.Evince
-          - org.gnome.FileRoller
-          - org.gnome.font-viewer
+          - io.elementary.camera/x86_64/stable
+          - io.elementary.capnet-assist/x86_64/stable
+          - io.elementary.contacts/x86_64/daily
+          - io.elementary.iconbrowser/x86_64/stable
+          - io.elementary.maps/x86_64/stable
+          - io.elementary.music/x86_64/stable
+          - io.elementary.screenshot/x86_64/stable
+          - io.elementary.tasks/x86_64/daily
+          - io.elementary.videos/x86_64/stable
+          - org.gnome.Epiphany/x86_64/stable
+          - org.gnome.Evince/x86_64/stable
+          - org.gnome.FileRoller/x86_64/stable
+          - org.gnome.font-viewer/x86_64/stable
       - scope: user # Also add Flathub user repo, but no user packages
 
   - type: initramfs
