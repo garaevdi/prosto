@@ -39,6 +39,7 @@ modules:
         - elementary-files-portal
         - expandtheon
         - gala
+        - gcr
         - pantheon-agent-polkit
         - pantheon-session-settings
         - plymouth-theme-elementary
@@ -52,6 +53,7 @@ modules:
       packages:
         - firefox
         - firefox-langpacks # also remove firefox dependency (not required for all packages, this is a special case)
+        - wingpanel-indicator-a11y # archived at upstream
 
   - type: default-flatpaks
     configurations:
