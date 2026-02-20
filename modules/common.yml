@@ -20,6 +20,8 @@ modules:
       copr:
         - garaevdi/pantheon-rpm
       nonfree: rpmfusion
+      files:
+        - https://github.com/terrapkg/subatomic-repos/raw/main/terra.repo
       cleanup: true
     install:
       packages:
@@ -40,6 +42,7 @@ modules:
         - expandtheon
         - gala
         - gcr
+        - PackageKit-bootc
         - pantheon-agent-polkit
         - pantheon-session-settings
         - plymouth-theme-elementary
