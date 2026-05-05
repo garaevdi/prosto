@@ -6,7 +6,7 @@ description: Experimental OS with Fedora + Pantheon.
 base-image: ghcr.io/blue-build/base-images/fedora-base
 alt-tags:
   - latest
-image-version: 44
+image-version: 43
 
 modules:
   - from-file: ../modules/common.yml
