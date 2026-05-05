@@ -1,12 +1,12 @@
 ---
 # yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
 name: prosto
-description: Experimental OS with Fedora + Pantheon.
+description: Experimental OS with Fedora + Pantheon (Testing).
 
 base-image: quay.io/fedora/fedora-bootc
 alt-tags:
   - testing
-image-version: 44
+image-version: rawhide
 
 modules:
   - type: dnf
