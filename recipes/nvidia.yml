@@ -6,7 +6,7 @@ description: Experimental OS with Fedora + Pantheon (nvidia-version).
 base-image: ghcr.io/blue-build/base-images/fedora-base-nvidia-open
 alt-tags:
   - latest-nvidia
-image-version: 43
+image-version: 44
 
 modules:
   - from-file: ../modules/common.yml
