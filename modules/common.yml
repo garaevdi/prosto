@@ -49,9 +49,6 @@ modules:
         - switchboard
         - wingpanel
         - xdg-desktop-portal-pantheon
-        - gstreamer1-plugins-bad-freeworld
-        - gstreamer1-plugins-ugly
-        - gstreamer1-plugin-openh264
     remove:
       packages:
         - firefox
