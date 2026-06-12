@@ -1,0 +1,4 @@
+aliases:
+  pypi: https://files.pythonhosted.org/packages/
+  elementary_github: https://github.com/elementary/
+  gnome_gitlab: https://gitlab.gnome.org/
