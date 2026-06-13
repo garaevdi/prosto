@@ -53,4 +53,4 @@ config:
     sbsign --key DB.key --cert DB.crt --output "%{install-root}/efi/EFI/io.github.garaevdi.prosto/mmx64.efi" "/efi/EFI/io.github.garaevdi.prosto/mmx64.efi"
     sbsign --key DB.key --cert DB.crt --output "%{install-root}/efi/EFI/BOOT/fbx64.efi" "/efi/EFI/BOOT/fbx64.efi"
     cp "%{install-root}/efi/EFI/io.github.garaevdi.prosto/mmx64.efi" "%{install-root}/efi/EFI/BOOT/mmx64.efi"
-    cp "%{install-root}/efi/EFI/io.github.garaevdi.prosto/shimx64.efi" "%{install-root}/efi/EFI/BOOT/BOOTX64.efi"
+    cp "%{install-root}/efi/EFI/io.github.garaevdi.prosto/shimx64.efi" "%{install-root}/efi/EFI/BOOT/BOOTX64.EFI"

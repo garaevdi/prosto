@@ -40,7 +40,7 @@ config:
   - |
     mkdir -p /microcode/kernel/x86/microcode
     cat /usr/lib/firmware/amd-ucode/microcode_amd*.bin >/microcode/kernel/x86/microcode/AuthenticAMD.bin
-    cp /usr/lib/firmware/intel-ucode/GenuineIntel.bin >/microcode/kernel/x86/microcode/GenuineIntel.bin
+    cp /usr/lib/firmware/intel-ucode/GenuineIntel.bin /microcode/kernel/x86/microcode/GenuineIntel.bin
     (
       cd /microcode
       find . -print0 | sort -z | cpio --reproducible --null -H newc -o --quiet >/microcode.img

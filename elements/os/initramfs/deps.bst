@@ -21,3 +21,4 @@ depends:
 - system/plymouth-theme.bst
 - os/initramfs/signed-modules.bst
 - os/os-release.bst
+- os/live.bst

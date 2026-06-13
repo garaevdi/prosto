@@ -12,3 +12,4 @@ depends:
 - os/replace-signed-systemd-boot.bst
 - os/signed-boot-common.bst
 - os/import-deployment-pub-key.bst
+- os/live.bst
