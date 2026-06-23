@@ -1,0 +1,657 @@
+From 451a9af9500e0d782b2fcec52fc3c9d5d22b4679 Mon Sep 17 00:00:00 2001
+From: Leonhard <leo.kargl@proton.me>
+Date: Sun, 31 May 2026 21:13:52 +0200
+Subject: [PATCH 1/9] ModalProxy: Explicitly allow window groups
+
+---
+ lib/WindowManager.vala                         | 15 +++++++++++++++
+ src/Widgets/ModalGroup.vala                    |  3 +++
+ .../MultitaskingView/MultitaskingView.vala     |  2 ++
+ src/WindowManager.vala                         | 18 +++++++++---------
+ 4 files changed, 29 insertions(+), 9 deletions(-)
+
+diff --git a/lib/WindowManager.vala b/lib/WindowManager.vala
+index af03e96bb..413e13286 100644
+--- a/lib/WindowManager.vala
++++ b/lib/WindowManager.vala
+@@ -38,6 +38,12 @@ namespace Gala {
+         MEDIA_KEYS
+     }
+ 
++    public enum WindowGroup {
++        DESKTOP_SHELL,
++        MODAL,
++        OVERLAY,
++    }
++
+     /**
+      * A minimal class mostly used to identify your call to {@link WindowManager.push_modal} and used
+      * to end your modal mode again with {@link WindowManager.pop_modal}
+@@ -46,6 +52,7 @@ namespace Gala {
+         public Clutter.Grab? grab { get; set; }
+ 
+         private ModalActions allowed_actions;
++        private WindowGroup[] allowed_window_groups;
+ 
+         public ModalProxy () {
+         }
+@@ -57,6 +64,14 @@ namespace Gala {
+         public bool filter_action (ModalActions action) {
+             return !(action in allowed_actions);
+         }
++
++        public void allow_window_groups (WindowGroup[] window_groups) requires (grab == null) {
++            allowed_window_groups = window_groups;
++        }
++
++        public bool is_window_group_allowed (WindowGroup window_group) {
++            return window_group in allowed_window_groups;
++        }
+     }
+ 
+     public interface WindowManager : Meta.Plugin {
+diff --git a/src/Widgets/ModalGroup.vala b/src/Widgets/ModalGroup.vala
+index 3fd21eec7..67d8bea54 100644
+--- a/src/Widgets/ModalGroup.vala
++++ b/src/Widgets/ModalGroup.vala
+@@ -14,6 +14,8 @@
+  * instead to {@link window_group}.
+  */
+ public class Gala.ModalGroup : Clutter.Actor {
++    private const WindowGroup[] ALLOWED_WINDOW_GROUPS = { MODAL, OVERLAY };
++
+     public WindowManager wm { private get; construct; }
+     public ShellClientsManager shell_clients { private get; construct; }
+ 
+@@ -71,6 +73,7 @@ public class Gala.ModalGroup : Clutter.Actor {
+             visible = true;
+             modal_proxy = wm.push_modal (this, false);
+             modal_proxy.allow_actions (ZOOM | LOCATE_POINTER | SCREENSHOT | SCREENSHOT_AREA | SCREENSHOT_WINDOW);
++            modal_proxy.allow_window_groups (ALLOWED_WINDOW_GROUPS);
+         }
+ 
+         if (dimmed.size == 1) {
+diff --git a/src/Widgets/MultitaskingView/MultitaskingView.vala b/src/Widgets/MultitaskingView/MultitaskingView.vala
+index 16b9daa36..2b37c4274 100644
+--- a/src/Widgets/MultitaskingView/MultitaskingView.vala
++++ b/src/Widgets/MultitaskingView/MultitaskingView.vala
+@@ -22,6 +22,7 @@
+  */
+ public class Gala.MultitaskingView : Root, RootTarget, ActivatableComponent {
+     public const int ANIMATION_DURATION = 250;
++    private const WindowGroup[] ALLOWED_WINDOW_GROUPS = { DESKTOP_SHELL, OVERLAY };
+ 
+     private GestureController workspaces_gesture_controller;
+     private GestureController multitasking_gesture_controller;
+@@ -234,6 +235,7 @@ public class Gala.MultitaskingView : Root, RootTarget, ActivatableComponent {
+ 
+             modal_proxy = wm.push_modal (get_stage (), false);
+             modal_proxy.allow_actions (MULTITASKING_VIEW | SWITCH_WORKSPACE | ZOOM | LOCATE_POINTER | MEDIA_KEYS | SCREENSHOT | SCREENSHOT_AREA);
++            modal_proxy.allow_window_groups (ALLOWED_WINDOW_GROUPS);
+         } else if (action == MULTITASKING_VIEW) {
+             DragDropAction.cancel_all_by_id ("multitaskingview-window");
+         }
+diff --git a/src/WindowManager.vala b/src/WindowManager.vala
+index ce9b1dd3b..7a8620831 100644
+--- a/src/WindowManager.vala
++++ b/src/WindowManager.vala
+@@ -18,12 +18,6 @@
+ 
+ namespace Gala {
+     public class WindowManagerGala : Meta.Plugin, WindowManager {
+-        public enum WindowGroup {
+-            DESKTOP_SHELL,
+-            MODAL,
+-            OVERLAY,
+-        }
+-
+         private const string OPEN_MULTITASKING_VIEW = "dbus-send --session --dest=org.pantheon.gala --print-reply /org/pantheon/gala org.pantheon.gala.PerformAction int32:1";
+         private const string OPEN_APPLICATIONS_MENU = "io.elementary.wingpanel --toggle-indicator=app-launcher";
+ 
+@@ -721,12 +715,18 @@ namespace Gala {
+         private void on_focus_window_changed () {
+             unowned var display = get_display ();
+ 
+-            if (!is_modal () || modal_stack.peek_head ().grab != null || display.focus_window == null ||
+-                ShellClientsManager.get_instance ().is_shell_window (display.focus_window)
+-            ) {
++            if (!is_modal () || modal_stack.peek_head ().grab != null || display.focus_window == null) {
+                 return;
+             }
+ 
++            if (overridden_window_group.has_key (display.focus_window)) {
++                var overridden_group = overridden_window_group[display.focus_window];
++
++                if (modal_stack.peek_head ().is_window_group_allowed (overridden_group)) {
++                    return;
++                }
++            }
++
+             display.unset_input_focus (display.get_current_time ());
+         }
+ 
+
+From 362e5041c4544ee2b536a88eda8559e23fd11287 Mon Sep 17 00:00:00 2001
+From: Leonhard <leo.kargl@proton.me>
+Date: Wed, 29 Apr 2026 12:40:12 +0200
+Subject: [PATCH 2/9] ShellClients: Add a wait for n panels key
+
+---
+ data/io.elementary.desktop.wm.shell       | 2 ++
+ src/ShellClients/ShellClientsManager.vala | 8 ++++++--
+ 2 files changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/data/io.elementary.desktop.wm.shell b/data/io.elementary.desktop.wm.shell
+index b0cca77c5..20db9b888 100644
+--- a/data/io.elementary.desktop.wm.shell
++++ b/data/io.elementary.desktop.wm.shell
+@@ -1,7 +1,9 @@
+ [io.elementary.wingpanel]
+ launch-on-x=true
+ args=io.elementary.wingpanel
++wait-for-n-panels=1
+ 
+ [io.elementary.dock]
+ launch-on-x=true
+ args=io.elementary.dock
++wait-for-n-panels=1
+diff --git a/src/ShellClients/ShellClientsManager.vala b/src/ShellClients/ShellClientsManager.vala
+index 849b7ef82..504942ec1 100644
+--- a/src/ShellClients/ShellClientsManager.vala
++++ b/src/ShellClients/ShellClientsManager.vala
+@@ -103,6 +103,12 @@ public class Gala.ShellClientsManager : Object, GestureTarget {
+                 }
+             }
+ 
++            try {
++                starting_panels += key_file.get_integer (group, "wait-for-n-panels");
++            } catch (Error e) {
++                warning ("Failed to check how many panels should be awaited, assuming 0: %s", e.message);
++            }
++
+             try {
+                 var args = key_file.get_string_list (group, "args");
+                 protocol_clients += new ManagedClient (wm.get_display (), args);
+@@ -110,8 +116,6 @@ public class Gala.ShellClientsManager : Object, GestureTarget {
+                 warning ("Failed to load launch args for client %s: %s", group, e.message);
+             }
+         }
+-
+-        starting_panels = protocol_clients.length;
+     }
+ 
+     private void on_failsafe_timeout () {
+
+From 56e557620d1ced9918bc503ab9f4afa9d7598255 Mon Sep 17 00:00:00 2001
+From: Leonhard <leo.kargl@proton.me>
+Date: Sat, 25 Apr 2026 15:19:50 +0200
+Subject: [PATCH 3/9] Add SessionSettings
+
+---
+ lib/SessionSettings.vala | 43 ++++++++++++++++++++++++++++++++++++++++
+ lib/meson.build          |  1 +
+ 2 files changed, 44 insertions(+)
+ create mode 100644 lib/SessionSettings.vala
+
+diff --git a/lib/SessionSettings.vala b/lib/SessionSettings.vala
+new file mode 100644
+index 000000000..3bce91b46
+--- /dev/null
++++ b/lib/SessionSettings.vala
+@@ -0,0 +1,43 @@
++/*
++ * Copyright 2026 elementary, Inc. (https://elementary.io)
++ * SPDX-License-Identifier: GPL-3.0-or-later
++ *
++ * Authored by: Leonhard Kargl <leo.kargl@proton.me>
++ */
++
++namespace Gala.SessionSettings {
++    private enum SessionType {
++        DESKTOP,
++        GREETER,
++        INSTALLER;
++    }
++
++    private static SessionType? session_type = null;
++
++    private static SessionType get_session_type () {
++        if (session_type == null) {
++            var session_type_str = Environment.get_variable ("GALA_SESSION_TYPE") ?? "desktop";
++            switch (session_type_str) {
++                case "desktop":
++                    session_type = DESKTOP;
++                    break;
++                case "greeter":
++                    session_type = GREETER;
++                    break;
++                case "installer":
++                    session_type = INSTALLER;
++                    break;
++                default:
++                    warning ("Unknown session type: %s", session_type_str);
++                    session_type = DESKTOP;
++                    break;
++            }
++        }
++
++        return session_type;
++    }
++
++    public bool is_greeter () {
++        return get_session_type () != DESKTOP;
++    }
++}
+diff --git a/lib/meson.build b/lib/meson.build
+index b6a34f261..7a205a367 100644
+--- a/lib/meson.build
++++ b/lib/meson.build
+@@ -8,6 +8,7 @@ gala_lib_sources = files(
+     'Constants.vala',
+     'DragDropAction.vala',
+     'Plugin.vala',
++    'SessionSettings.vala',
+     'Utils.vala',
+     'WindowManager.vala',
+     'AppSystem/App.vala',
+
+From d46b72cc95e49db9b1a5e689524c60ecd1389acb Mon Sep 17 00:00:00 2001
+From: Leonhard <leo.kargl@proton.me>
+Date: Tue, 12 May 2026 19:14:15 +0200
+Subject: [PATCH 4/9] Introduce LockScreen
+
+---
+ lib/WindowManager.vala      |  2 ++
+ src/Widgets/LockScreen.vala | 68 +++++++++++++++++++++++++++++++++++++
+ src/WindowManager.vala      | 13 ++++++-
+ src/meson.build             |  1 +
+ 4 files changed, 83 insertions(+), 1 deletion(-)
+ create mode 100644 src/Widgets/LockScreen.vala
+
+diff --git a/lib/WindowManager.vala b/lib/WindowManager.vala
+index 413e13286..705df6bc5 100644
+--- a/lib/WindowManager.vala
++++ b/lib/WindowManager.vala
+@@ -40,6 +40,8 @@ namespace Gala {
+ 
+     public enum WindowGroup {
+         DESKTOP_SHELL,
++        LOCK_SCREEN,
++        LOCK_SCREEN_SHELL,
+         MODAL,
+         OVERLAY,
+     }
+diff --git a/src/Widgets/LockScreen.vala b/src/Widgets/LockScreen.vala
+new file mode 100644
+index 000000000..b7e9325fa
+--- /dev/null
++++ b/src/Widgets/LockScreen.vala
+@@ -0,0 +1,68 @@
++/*
++ * Copyright 2026 elementary, Inc. (https://elementary.io)
++ * SPDX-License-Identifier: GPL-3.0-or-later
++ *
++ * Authored by: Leonhard Kargl <leo.kargl@proton.me>
++ */
++
++public class Gala.LockScreen : Clutter.Actor {
++    private const WindowGroup[] ALLOWED_WINDOW_GROUPS = { LOCK_SCREEN, LOCK_SCREEN_SHELL, OVERLAY };
++
++    public WindowManager wm { get; construct; }
++
++    public Clutter.Actor window_group { get; private set; }
++    public Clutter.Actor shell_group { get; private set; }
++
++    private bool active;
++    private ModalProxy? modal_proxy;
++
++    public LockScreen (WindowManager wm) {
++        Object (wm: wm);
++    }
++
++    construct {
++        var background = new BackgroundContainer (wm.get_display ());
++        background.add_effect (new BlurEffect (background, 18));
++
++        window_group = new Clutter.Actor ();
++        shell_group = new Clutter.Actor ();
++
++        add_child (background);
++        add_child (window_group);
++        add_child (shell_group);
++
++        reactive = true;
++        visible = true;
++
++        active = true;
++        update_modal ();
++    }
++
++    public async void set_active (bool active) {
++        if (this.active == active) {
++            return;
++        }
++
++        this.active = active;
++        update_modal ();
++
++        /* We can and should add a transition here */
++
++        visible = active;
++    }
++
++    private void update_modal () {
++        if (active) {
++            assert (modal_proxy == null);
++
++            modal_proxy = wm.push_modal (this, false);
++            modal_proxy.allow_actions (MEDIA_KEYS | ZOOM | LOCATE_POINTER);
++            modal_proxy.allow_window_groups (ALLOWED_WINDOW_GROUPS);
++        } else {
++            assert (modal_proxy != null);
++
++            wm.pop_modal (modal_proxy);
++            modal_proxy = null;
++        }
++    }
++}
+diff --git a/src/WindowManager.vala b/src/WindowManager.vala
+index 7a8620831..7bb935a2d 100644
+--- a/src/WindowManager.vala
++++ b/src/WindowManager.vala
+@@ -51,6 +51,8 @@ namespace Gala {
+ 
+         private Clutter.Actor menu_group { get; set; }
+ 
++        private LockScreen lock_screen;
++
+         /**
+          * The group that contains all WindowActors that are system modal.
+          * See {@link ShellClientsManager.is_system_modal_window}.
+@@ -239,8 +241,11 @@ namespace Gala {
+              * +-- multitasking view
+              * +-- window switcher
+              * +-- window overview
+-             * +-- shell group
++             * +-- desktop shell group
+              * +-- menu group
++             * +-- lock screen // NOTE: Everything below the lock screen can be accessed without authentication
++             * +---- window group
++             * +---- shell group
+              * +-- modal group
+              * +-- overlay group (e.g. ibus popup, osk, etc.)
+              * +-- feedback group (e.g. DND icons)
+@@ -310,6 +315,10 @@ namespace Gala {
+             menu_group = new Clutter.Actor ();
+             ui_group.add_child (menu_group);
+ 
++            lock_screen = new LockScreen (this);
++            lock_screen.add_constraint (new Clutter.BindConstraint (stage, SIZE, 0));
++            ui_group.add_child (lock_screen);
++
+             modal_group = new ModalGroup (this, ShellClientsManager.get_instance ());
+             modal_group.add_constraint (new Clutter.BindConstraint (stage, SIZE, 0));
+             ui_group.add_child (modal_group);
+@@ -1073,6 +1082,8 @@ namespace Gala {
+         private Clutter.Actor get_window_group_actor (WindowGroup group) {
+             switch (group) {
+                 case DESKTOP_SHELL: return shell_group;
++                case LOCK_SCREEN: return lock_screen.window_group;
++                case LOCK_SCREEN_SHELL: return lock_screen.shell_group;
+                 case MODAL: return modal_group.window_group;
+                 case OVERLAY: return overlay_group;
+                 default: assert_not_reached ();
+diff --git a/src/meson.build b/src/meson.build
+index 470aa1e81..9ae5698d6 100644
+--- a/src/meson.build
++++ b/src/meson.build
+@@ -55,6 +55,7 @@ gala_bin_sources = files(
+     'ShellClients/ShellClientsManager.vala',
+     'ShellClients/ShellWindow.vala',
+     'Widgets/DwellClickTimer.vala',
++    'Widgets/LockScreen.vala',
+     'Widgets/MultitaskingView/MonitorClone.vala',
+     'Widgets/MultitaskingView/MultitaskingView.vala',
+     'Widgets/MultitaskingView/StaticWindowClone.vala',
+
+From 4f242f8f1e27a53ecd9b39299ecc47cfca0cdcca Mon Sep 17 00:00:00 2001
+From: Leonhard <leo.kargl@proton.me>
+Date: Fri, 29 May 2026 18:28:07 +0200
+Subject: [PATCH 5/9] Introduce LockScreenManager
+
+---
+ src/LockScreenManager.vala | 29 +++++++++++++++++++++++++++++
+ src/WindowManager.vala     |  4 ++++
+ src/meson.build            |  1 +
+ 3 files changed, 34 insertions(+)
+ create mode 100644 src/LockScreenManager.vala
+
+diff --git a/src/LockScreenManager.vala b/src/LockScreenManager.vala
+new file mode 100644
+index 000000000..03a877979
+--- /dev/null
++++ b/src/LockScreenManager.vala
+@@ -0,0 +1,29 @@
++/*
++ * Copyright 2026 elementary, Inc. (https://elementary.io)
++ * SPDX-License-Identifier: GPL-3.0-or-later
++ *
++ * Authored by: Leonhard Kargl <leo.kargl@proton.me>
++ */
++
++public class Gala.LockScreenManager : Object {
++    public LockScreen lock_screen { private get; construct; }
++
++    /**
++     * To be set by the session locker in the future when we have an in session lock screen
++     */
++    public bool manually_locked { get; set; default = false; }
++
++    public LockScreenManager (LockScreen lock_screen) {
++        Object (lock_screen: lock_screen);
++    }
++
++    construct {
++        notify["manually-locked"].connect (update_active);
++        update_active ();
++    }
++
++    private void update_active () {
++        var active = manually_locked || SessionSettings.is_greeter ();
++        lock_screen.set_active.begin (active);
++    }
++}
+diff --git a/src/WindowManager.vala b/src/WindowManager.vala
+index 7bb935a2d..90ed714c4 100644
+--- a/src/WindowManager.vala
++++ b/src/WindowManager.vala
+@@ -112,6 +112,8 @@ namespace Gala {
+ 
+         private NotificationStack notification_stack;
+ 
++        private LockScreenManager lock_screen_manager;
++
+         private Gee.LinkedList<ModalProxy> modal_stack = new Gee.LinkedList<ModalProxy> ();
+ 
+         private Gee.HashSet<Meta.WindowActor> minimizing = new Gee.HashSet<Meta.WindowActor> ();
+@@ -319,6 +321,8 @@ namespace Gala {
+             lock_screen.add_constraint (new Clutter.BindConstraint (stage, SIZE, 0));
+             ui_group.add_child (lock_screen);
+ 
++            lock_screen_manager = new LockScreenManager (lock_screen);
++
+             modal_group = new ModalGroup (this, ShellClientsManager.get_instance ());
+             modal_group.add_constraint (new Clutter.BindConstraint (stage, SIZE, 0));
+             ui_group.add_child (modal_group);
+diff --git a/src/meson.build b/src/meson.build
+index 9ae5698d6..1395c66a8 100644
+--- a/src/meson.build
++++ b/src/meson.build
+@@ -7,6 +7,7 @@ gala_bin_sources = files(
+     'InputMethod.vala',
+     'InternalUtils.vala',
+     'KeyboardManager.vala',
++    'LockScreenManager.vala',
+     'Main.vala',
+     'NotificationsManager.vala',
+     'NotificationStack.vala',
+
+From 91017ae91dd71ff22e4e21ed3c0dbb067e6ac250 Mon Sep 17 00:00:00 2001
+From: Leonhard <leo.kargl@proton.me>
+Date: Sun, 31 May 2026 18:02:06 +0200
+Subject: [PATCH 6/9] WindowManager: Integrate with lock screen
+
+---
+ src/WindowManager.vala | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/src/WindowManager.vala b/src/WindowManager.vala
+index 90ed714c4..bb00be4b5 100644
+--- a/src/WindowManager.vala
++++ b/src/WindowManager.vala
+@@ -1117,6 +1117,14 @@ namespace Gala {
+                 return;
+             }
+ 
++            if (SessionSettings.is_greeter ()) {
++                /* If we are in the greeter only the lock screen group is visible,
++                   so put everything there. This makes sure stuff like initial setup, keyboard layout overview
++                   etc. are still visible */
++                override_window_group (window, LOCK_SCREEN);
++                return;
++            }
++
+             if (NotificationStack.is_notification (window)) {
+                 override_window_group (window, DESKTOP_SHELL);
+                 notification_stack.show_notification (actor);
+
+From 5f299f1bb809e39c8eecbee2967ac6d123bc5215 Mon Sep 17 00:00:00 2001
+From: Leonhard <leo.kargl@proton.me>
+Date: Sat, 25 Apr 2026 15:23:52 +0200
+Subject: [PATCH 7/9] Allow to launch only specific shell clients based on
+ session type
+
+---
+ data/io.elementary.desktop.wm.shell       |  2 ++
+ lib/SessionSettings.vala                  | 13 +++++++++++++
+ src/ShellClients/ShellClientsManager.vala |  9 +++++++++
+ 3 files changed, 24 insertions(+)
+
+diff --git a/data/io.elementary.desktop.wm.shell b/data/io.elementary.desktop.wm.shell
+index 20db9b888..9f13afed7 100644
+--- a/data/io.elementary.desktop.wm.shell
++++ b/data/io.elementary.desktop.wm.shell
+@@ -2,8 +2,10 @@
+ launch-on-x=true
+ args=io.elementary.wingpanel
+ wait-for-n-panels=1
++session-type=desktop
+ 
+ [io.elementary.dock]
+ launch-on-x=true
+ args=io.elementary.dock
+ wait-for-n-panels=1
++session-type=desktop
+diff --git a/lib/SessionSettings.vala b/lib/SessionSettings.vala
+index 3bce91b46..f74478eb1 100644
+--- a/lib/SessionSettings.vala
++++ b/lib/SessionSettings.vala
+@@ -40,4 +40,17 @@ namespace Gala.SessionSettings {
+     public bool is_greeter () {
+         return get_session_type () != DESKTOP;
+     }
++
++    public string get_shell_clients_type () {
++        switch (get_session_type ()) {
++            case DESKTOP:
++                return "desktop";
++            case GREETER:
++                return "greeter";
++            case INSTALLER:
++                return "installer";
++        }
++
++        return "desktop";
++    }
+ }
+diff --git a/src/ShellClients/ShellClientsManager.vala b/src/ShellClients/ShellClientsManager.vala
+index 504942ec1..7933a1f05 100644
+--- a/src/ShellClients/ShellClientsManager.vala
++++ b/src/ShellClients/ShellClientsManager.vala
+@@ -103,6 +103,15 @@ public class Gala.ShellClientsManager : Object, GestureTarget {
+                 }
+             }
+ 
++            try {
++                var type = key_file.get_string (group, "session-type");
++                if (type != SessionSettings.get_shell_clients_type ()) {
++                    continue;
++                }
++            } catch (Error e) {
++                warning ("Failed to check session type for client %s, assuming it should be launched: %s", group, e.message);
++            }
++
+             try {
+                 starting_panels += key_file.get_integer (group, "wait-for-n-panels");
+             } catch (Error e) {
+
+From cca50d2b95c8c4b927c1d4ac5fedd93f40edac01 Mon Sep 17 00:00:00 2001
+From: Leonhard <leo.kargl@proton.me>
+Date: Sat, 25 Apr 2026 15:27:19 +0200
+Subject: [PATCH 8/9] ShellClients: Add clients required for greeter
+
+---
+ data/io.elementary.desktop.wm.shell | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/data/io.elementary.desktop.wm.shell b/data/io.elementary.desktop.wm.shell
+index 9f13afed7..9f98f1c5c 100644
+--- a/data/io.elementary.desktop.wm.shell
++++ b/data/io.elementary.desktop.wm.shell
+@@ -9,3 +9,19 @@ launch-on-x=true
+ args=io.elementary.dock
+ wait-for-n-panels=1
+ session-type=desktop
++
++[Greeter wingpanel]
++args=io.elementary.wingpanel;-g
++session-type=greeter
++
++[Greeter Session Manager]
++args=io.elementary.greeter-session-manager
++session-type=greeter
++
++[Greeter]
++args=io.elementary.greeter
++session-type=greeter
++
++[Greeter Settings Daemon]
++args=io.elementary.settings-daemon
++session-type=greeter
+
+From b8c859b15aa78c347ca1fcd3d8db85712c2240ec Mon Sep 17 00:00:00 2001
+From: Leonhard <leo.kargl@proton.me>
+Date: Tue, 12 May 2026 19:28:55 +0200
+Subject: [PATCH 9/9] ShellClientsManager: Integrate with lock screen
+
+---
+ src/ShellClients/ShellClientsManager.vala | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/src/ShellClients/ShellClientsManager.vala b/src/ShellClients/ShellClientsManager.vala
+index 7933a1f05..bcaf1d4a2 100644
+--- a/src/ShellClients/ShellClientsManager.vala
++++ b/src/ShellClients/ShellClientsManager.vala
+@@ -193,7 +193,11 @@ public class Gala.ShellClientsManager : Object, GestureTarget {
+ 
+         panel_windows[window] = new PanelWindow (wm, window, anchor);
+ 
+-        wm.override_window_group (window, DESKTOP_SHELL);
++        if (SessionSettings.is_greeter ()) {
++            wm.override_window_group (window, LOCK_SCREEN_SHELL);
++        } else {
++            wm.override_window_group (window, DESKTOP_SHELL);
++        }
+ 
+         InternalUtils.wait_for_window_actor_visible (window, on_panel_ready);
+ 

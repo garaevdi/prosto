@@ -1,0 +1,78 @@
+From 4416df6253f42392659a023ddfc241a363925676 Mon Sep 17 00:00:00 2001
+From: Leonhard <leo.kargl@proton.me>
+Date: Sun, 26 Apr 2026 01:18:38 +0200
+Subject: [PATCH 1/2] Use gala instead of the greeter compositor
+
+---
+ data/io.elementary.greeter.desktop.in | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/data/io.elementary.greeter.desktop.in b/data/io.elementary.greeter.desktop.in
+index 4809815c..8d133f0f 100644
+--- a/data/io.elementary.greeter.desktop.in
++++ b/data/io.elementary.greeter.desktop.in
+@@ -2,7 +2,7 @@
+ Name=Pantheon Greeter
+ Comment=Pantheon Greeter
+ Icon=io.elementary.greeter.settings
+-Exec=@PROJECT_NAME@-compositor
++Exec=env GALA_SESSION_TYPE=greeter XDG_CURRENT_DESKTOP=Pantheon gala --wayland
+ Type=Application
+ X-LightDM-Session-Type=wayland
+ NoDisplay=true
+
+From 8fc058684d72f937287dc215254f175a2d757380 Mon Sep 17 00:00:00 2001
+From: Leonhard <leo.kargl@proton.me>
+Date: Sun, 31 May 2026 00:26:15 +0200
+Subject: [PATCH 2/2] Use uri instead of path for the background settings
+
+---
+ src/Cards/UserCard.vala | 14 +++++++++++---
+ 1 file changed, 11 insertions(+), 3 deletions(-)
+
+diff --git a/src/Cards/UserCard.vala b/src/Cards/UserCard.vala
+index 8bdfd56b..942ea27d 100644
+--- a/src/Cards/UserCard.vala
++++ b/src/Cards/UserCard.vala
+@@ -9,7 +9,7 @@ public class Greeter.UserCard : Greeter.BaseCard {
+     public LightDM.User lightdm_user { get; construct; }
+     public bool show_input { get; set; default = false; }
+     public bool is_24h { get; set; default = true; }
+-    // TODO: In Gtk4 remove this gesture and move it to MainWindow 
++    // TODO: In Gtk4 remove this gesture and move it to MainWindow
+     public Gtk.GestureMultiPress click_gesture { get; private set; }
+ 
+     private Pantheon.AccountsService greeter_act;
+@@ -182,6 +182,7 @@ public class Greeter.UserCard : Greeter.BaseCard {
+         Greeter.BackgroundImage background_image;
+ 
+         var background_path = lightdm_user.background;
++        warning ("Set background path to %s", background_path);
+         var background_exists = (
+             background_path != null &&
+             FileUtils.test (background_path, EXISTS) &&
+@@ -323,7 +324,7 @@ public class Greeter.UserCard : Greeter.BaseCard {
+         settings.set_value ("xkb-options", options);
+     }
+ 
+-    /* 
++    /*
+      * When we get string typed settings from our settings daemon account service we might get a null value.
+      * In this case we reset the value to avoid criticals and unwanted behaviour.
+      */
+@@ -382,7 +383,14 @@ public class Greeter.UserCard : Greeter.BaseCard {
+ 
+         var background_settings = new GLib.Settings ("org.gnome.desktop.background");
+         background_settings.set_enum ("picture-options", settings_act.picture_options);
+-        set_or_reset_settings_key (background_settings, "picture-uri", lightdm_user.background);
++
++        try {
++            var uri = Filename.to_uri (lightdm_user.background, null);
++            set_or_reset_settings_key (background_settings, "picture-uri", uri);
++        } catch (Error e) {
++            critical ("Failed to set background URI: %s", e.message);
++        }
++
+         set_or_reset_settings_key (background_settings, "primary-color", settings_act.primary_color);
+     }
+ 

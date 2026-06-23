@@ -1,9 +1,15 @@
 kind: meson
 
 sources:
-- kind: tar
-  url: elementary_github:gala/archive/8.5.1/gala-8.5.1.tar.gz
-  ref: 901e785df2f1d38e81b7fe10762e277b835d69757e106c497096842dcc06534c
+- kind: git_repo
+  url: elementary_github:gala.git
+  track: '*.*.*'
+  exclude:
+  - '*-debian'
+  # Use latest commit, so patches would apply cleanly
+  ref: e65c91fd2507c7b0ae5359e369636277c3cc35b4
+- kind: patch
+  path: patches/gala/implement-greeter.patch
 
 build-depends:
 - gnome-build-meta.bst:sdk/vala.bst

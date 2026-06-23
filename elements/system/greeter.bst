@@ -7,6 +7,8 @@ sources:
   - '*-debian'
   # Use latest commit, which includes mutter 50 support until new release
   ref: 08235bfbb5cd15c6835e56bcca2e6aa7de1ae23e
+- kind: patch
+  path: patches/greeter/use-gala.patch
 
 build-depends:
 - gnome-build-meta.bst:sdk/vala.bst
