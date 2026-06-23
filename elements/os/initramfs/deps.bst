@@ -18,7 +18,7 @@ depends:
 - gnome-build-meta.bst:gnomeos-deps/zram-generator.bst
 - gnome-build-meta.bst:gnomeos/reload-sysext.bst
 - gnome-build-meta.bst:gnomeos/confext.bst
+- gnome-build-meta.bst:gnomeos/live.bst
 - system/plymouth-theme.bst
 - os/initramfs/signed-modules.bst
 - os/os-release.bst
-- os/live.bst

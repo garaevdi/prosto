@@ -94,7 +94,7 @@ config:
     mv /build/disk.esp.raw /build/iso-root/esp.img
 
   - |
-    xorrisofs -o "/build/image.iso" /build/iso-root -partition_offset 480 -e /esp.img -no-emul-boot -boot-load-size 4 -efi-boot-part --efi-boot-image -sysid LINUX -publisher GARAEVDI -volid "Prosto"
+    xorrisofs -o "/build/image.iso" /build/iso-root -partition_offset 480 -e /esp.img -no-emul-boot -boot-load-size 4 -efi-boot-part --efi-boot-image -sysid LINUX -publisher GARAEVDI -volid "PROSTO"
 
   - |
     dd if=/build/image.iso of=/build/disk.raw bs=2048 skip=16 count=496 seek=16 conv=notrunc

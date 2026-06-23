@@ -1,14 +1,14 @@
 kind: script
 
 build-depends:
-- os/generate-initramfs.bst
+- gnome-build-meta.bst:gnomeos/generate-initramfs.bst
 - os/initramfs/deps.bst
 - os/initramfs/initial-scripts.bst
 - gnome-build-meta.bst:freedesktop-sdk.bst:components/fakecap.bst
 - gnome-build-meta.bst:freedesktop-sdk.bst:vm/prepare-image.bst
 
 variables:
-  sysroot-seed: 631ad25a-9dec-4cfb-abd4-865f979ff4ae
+  sysroot-seed: affd51e3-7a3b-4078-9a80-0baf91fb7756
 
 environment:
   LD_PRELOAD: /usr/libexec/fakecap/fakecap.so

@@ -1,0 +1,260 @@
+diff --git a/files/gnomeos/generate-initramfs/modules/50-cdrom/80-sr-loop.rules b/files/gnomeos/generate-initramfs/modules/50-cdrom/80-sr-loop.rules
+index 08417216e..b796afd0c 100644
+--- a/files/gnomeos/generate-initramfs/modules/50-cdrom/80-sr-loop.rules
++++ b/files/gnomeos/generate-initramfs/modules/50-cdrom/80-sr-loop.rules
+@@ -1,2 +1,2 @@
+-ACTION=="add", SUBSYSTEM=="block", KERNEL=="sr*", ENV{ID_FS_PUBLISHER_ID}=="GNOME", ENV{ID_FS_LABEL}=="GNOME-OS-*", ENV{SYSTEMD_WANTS}+="sr-loop@%k.service", TAG+="systemd"
+-ACTION!="remove", SUBSYSTEM=="block", KERNEL=="loop*", ENV{ID_FS_PUBLISHER_ID}=="GNOME", ENV{ID_FS_LABEL}=="GNOME-OS-*", ENV{SYSTEMD_WANTS}+="sr-loop-partscan@%k.service", TAG+="systemd"
++ACTION=="add", SUBSYSTEM=="block", KERNEL=="sr*", ENV{ID_FS_PUBLISHER_ID}=="GARAEVDI", ENV{ID_FS_LABEL}=="PROSTO", ENV{SYSTEMD_WANTS}+="sr-loop@%k.service", TAG+="systemd"
++ACTION!="remove", SUBSYSTEM=="block", KERNEL=="loop*", ENV{ID_FS_PUBLISHER_ID}=="GARAEVDI", ENV{ID_FS_LABEL}=="PROSTO", ENV{SYSTEMD_WANTS}+="sr-loop-partscan@%k.service", TAG+="systemd"
+diff --git a/files/gnomeos/generate-initramfs/modules/50-cdrom/sr-loop-partscan@.service b/files/gnomeos/generate-initramfs/modules/50-cdrom/sr-loop-partscan@.service
+index 0cd321114..5837e7259 100644
+--- a/files/gnomeos/generate-initramfs/modules/50-cdrom/sr-loop-partscan@.service
++++ b/files/gnomeos/generate-initramfs/modules/50-cdrom/sr-loop-partscan@.service
+@@ -1,6 +1,6 @@
+ [Unit]
+ DefaultDependencies=no
+-ConditionKernelCommandLine=root=live:gnomeos
++ConditionKernelCommandLine=root=live:prosto
+ 
+ [Service]
+ Type=oneshot
+diff --git a/files/gnomeos/generate-initramfs/modules/50-cdrom/sr-loop@.service b/files/gnomeos/generate-initramfs/modules/50-cdrom/sr-loop@.service
+index de839de68..31f3a29f9 100644
+--- a/files/gnomeos/generate-initramfs/modules/50-cdrom/sr-loop@.service
++++ b/files/gnomeos/generate-initramfs/modules/50-cdrom/sr-loop@.service
+@@ -1,6 +1,6 @@
+ [Unit]
+ DefaultDependencies=no
+-ConditionKernelCommandLine=root=live:gnomeos
++ConditionKernelCommandLine=root=live:prosto
+ 
+ [Service]
+ Type=oneshot
+diff --git a/files/gnomeos/generate-initramfs/modules/50-repart/disable-encryption.service b/files/gnomeos/generate-initramfs/modules/50-repart/disable-encryption.service
+index a810700ed..394d63f34 100644
+--- a/files/gnomeos/generate-initramfs/modules/50-repart/disable-encryption.service
++++ b/files/gnomeos/generate-initramfs/modules/50-repart/disable-encryption.service
+@@ -2,7 +2,7 @@
+ Description=Disable encryption
+ AssertPathExists=/etc/initrd-release
+ ConditionSecurity=!tpm2
+-ConditionKernelCommandLine=!root=live:gnomeos
++ConditionKernelCommandLine=!root=live:prosto
+ DefaultDependencies=no
+ Conflicts=shutdown.target
+ After=initrd-usr-fs.target
+diff --git a/files/gnomeos/generate-initramfs/modules/50-repart/enable-encryption.service b/files/gnomeos/generate-initramfs/modules/50-repart/enable-encryption.service
+index b43db5b67..2764cf278 100644
+--- a/files/gnomeos/generate-initramfs/modules/50-repart/enable-encryption.service
++++ b/files/gnomeos/generate-initramfs/modules/50-repart/enable-encryption.service
+@@ -2,7 +2,7 @@
+ Description=Enable encryption
+ AssertPathExists=/etc/initrd-release
+ ConditionSecurity=tpm2
+-ConditionKernelCommandLine=!root=live:gnomeos
++ConditionKernelCommandLine=!root=live:prosto
+ DefaultDependencies=no
+ Conflicts=shutdown.target
+ After=initrd-usr-fs.target
+diff --git a/files/gnomeos/live/kernel-cmdline.c b/files/gnomeos/live/kernel-cmdline.c
+index 73f9a336b..bf9fbbad7 100644
+--- a/files/gnomeos/live/kernel-cmdline.c
++++ b/files/gnomeos/live/kernel-cmdline.c
+@@ -129,7 +129,7 @@ bool parse_cmdline(bool *is_live) {
+         while (*current) {
+                 current = kernel_next_arg(current, &param, &val);
+                 if (strcmp(param, "root") == 0) {
+-                        if (strcmp(val, "live:gnomeos") == 0) {
++                        if (strcmp(val, "live:prosto") == 0) {
+                                 *is_live = true;
+                         }
+                 }
+diff --git a/files/gnomeos/live/live.conf b/files/gnomeos/live/live.conf
+index b49279234..2840b0c07 100644
+--- a/files/gnomeos/live/live.conf
++++ b/files/gnomeos/live/live.conf
+@@ -1,2 +1,2 @@
+ [Unit]
+-ConditionKernelCommandLine=!root=live:gnomeos
++ConditionKernelCommandLine=!root=live:prosto
+diff --git a/files/gnomeos/live/proto-installer/daemon/main.rs b/files/gnomeos/live/proto-installer/daemon/main.rs
+index 8c566bfe4..e745cca95 100644
+--- a/files/gnomeos/live/proto-installer/daemon/main.rs
++++ b/files/gnomeos/live/proto-installer/daemon/main.rs
+@@ -268,7 +268,7 @@ async fn write_repart_d(path : &std::path::Path, has_tpm2 : bool) -> Result<(),
+          Type=esp\n\
+          Format=vfat\n\
+          CopyFiles=/usr/share/factory/efi:/\n\
+-         CopyFiles=/var/lib/gnomeos/installer-esp/EFI/Linux/gnomeos_%A.efi:/EFI/Linux/gnomeos_%A.efi\n\
++         CopyFiles=/var/lib/gnomeos/installer-esp/EFI/Linux/prosto%A.efi:/EFI/Linux/prosto%A.efi\n\
+          CopyFiles=/var/lib/gnomeos/install-credentials:/loader/credentials\n\
+          SizeMinBytes=500M\n\
+          SizeMaxBytes=1G\n"
+@@ -277,7 +277,7 @@ async fn write_repart_d(path : &std::path::Path, has_tpm2 : bool) -> Result<(),
+     verity_a.write_all(format!(
+         "[Partition]\n\
+          Type=usr-verity\n\
+-         Label=gnomeos_usr_v_%A\n\
++         Label=prosto_usr_v_%A\n\
+          # verity for 4G, algo sha256, block size 512 and hash size 512 is 275M\n\
+          SizeMinBytes=275M\n\
+          SizeMaxBytes=275M\n\
+@@ -288,7 +288,7 @@ async fn write_repart_d(path : &std::path::Path, has_tpm2 : bool) -> Result<(),
+     usr_a.write_all(format!(
+         "[Partition]\n\
+          Type=usr\n\
+-         Label=gnomeos_usr_%A\n\
++         Label=prosto_usr_%A\n\
+          SizeMinBytes=4G\n\
+          SizeMaxBytes=4G\n\
+          CopyBlocks=auto\n"
+@@ -298,7 +298,7 @@ async fn write_repart_d(path : &std::path::Path, has_tpm2 : bool) -> Result<(),
+     verity_b.write_all(
+         "[Partition]\n\
+          Type=usr-verity\n\
+-         Label=gnomeos_usr_v_empty\n\
++         Label=prosto_usr_v_empty\n\
+          # verity for 4G, algo sha256, block size 512 and hash size 512 is 275M\n\
+          SizeMinBytes=275M\n\
+          SizeMaxBytes=275M\n"
+@@ -308,7 +308,7 @@ async fn write_repart_d(path : &std::path::Path, has_tpm2 : bool) -> Result<(),
+     usr_b.write_all(
+         "[Partition]\n\
+          Type=usr\n\
+-         Label=gnomeos_usr_empty\n\
++         Label=prosto_usr_empty\n\
+          SizeMinBytes=4G\n\
+          SizeMaxBytes=4G\n"
+             .as_bytes())?;
+diff --git a/files/gnomeos/live/proto-installer/gnomeos-installer.service b/files/gnomeos/live/proto-installer/gnomeos-installer.service
+index 1a5d13ab8..60d5e6557 100644
+--- a/files/gnomeos/live/proto-installer/gnomeos-installer.service
++++ b/files/gnomeos/live/proto-installer/gnomeos-installer.service
+@@ -1,5 +1,5 @@
+ [Unit]
+-ConditionKernelCommandLine=root=live:gnomeos
++ConditionKernelCommandLine=root=live:prosto
+ 
+ [Service]
+ Type=dbus
+diff --git a/files/gnomeos/live/rules.d/90-gnomeos-iso.rules b/files/gnomeos/live/rules.d/90-gnomeos-iso.rules
+index b759ba9ad..f1b0a0abe 100644
+--- a/files/gnomeos/live/rules.d/90-gnomeos-iso.rules
++++ b/files/gnomeos/live/rules.d/90-gnomeos-iso.rules
+@@ -1,6 +1,6 @@
+ SUBSYSTEM!="block", GOTO="gnomeos_iso_end"
+ 
+-KERNEL!="sr*", ENV{ID_FS_PUBLISHER_ID}=="GNOME", ENV{ID_FS_LABEL}=="GNOME-OS-*", SYMLINK+="gnomeos-installer/gpt", ENV{GNOMEOS_INSTALLER}="1"
++KERNEL!="sr*", ENV{ID_FS_PUBLISHER_ID}=="GARAEVDI", ENV{ID_FS_LABEL}=="PROSTO", SYMLINK+="gnomeos-installer/gpt", ENV{GNOMEOS_INSTALLER}="1"
+ 
+ ENV{DEVTYPE}!="partition", GOTO="gnomeos_iso_end"
+ 
+diff --git a/files/gnomeos/live/rules.d/90-gnomeos-pab.rules b/files/gnomeos/live/rules.d/90-gnomeos-pab.rules
+index d88651b3f..69a8354c0 100644
+--- a/files/gnomeos/live/rules.d/90-gnomeos-pab.rules
++++ b/files/gnomeos/live/rules.d/90-gnomeos-pab.rules
+@@ -9,8 +9,8 @@ IMPORT{parent}="GNOMEOS_PAB_INSTALL"
+ ENV{GNOMEOS_PAB_INSTALL}!="1", GOTO="gnomeos_pab_end"
+ 
+ TAG+="systemd"
+-ENV{ID_FS_TYPE}=="DM_verity_hash", , ENV{ID_PART_ENTRY_NAME}=="gnomeos_usr_v_*", SYMLINK+="gnomeos-pab-install/verity"
+-ENV{ID_FS_TYPE}=="squashfs|erofs", ENV{ID_PART_ENTRY_NAME}=="gnomeos_usr_*", SYMLINK+="gnomeos-pab-install/usr"
++ENV{ID_FS_TYPE}=="DM_verity_hash", , ENV{ID_PART_ENTRY_NAME}=="prosto_usr_v_*", SYMLINK+="gnomeos-pab-install/verity"
++ENV{ID_FS_TYPE}=="squashfs|erofs", ENV{ID_PART_ENTRY_NAME}=="prosto_usr_*", SYMLINK+="gnomeos-pab-install/usr"
+ ENV{ID_FS_TYPE}=="crypto_LUKS", ENV{ID_PART_ENTRY_NAME}=="root", SYMLINK+="gnomeos-pab-install/root-luks"
+ ENV{ID_PART_ENTRY_TYPE}=="c12a7328-f81f-11d2-ba4b-00a0c93ec93b", SYMLINK+="gnomeos-pab-install/esp"
+ 
+diff --git a/files/secure-repart-config/iso/20-usr-verity.conf b/files/secure-repart-config/iso/20-usr-verity.conf
+index 75419eefb..7cd28b369 100644
+--- a/files/secure-repart-config/iso/20-usr-verity.conf
++++ b/files/secure-repart-config/iso/20-usr-verity.conf
+@@ -1,5 +1,5 @@
+ [Partition]
+ Type=usr-verity
+-Label=gnomeos_usr_v_%A
++Label=prosto_usr_v_%A
+ CopyBlocks=/mini.usr-verity.raw
+ SplitName=usr-verity
+diff --git a/files/secure-repart-config/iso/21-usr.conf b/files/secure-repart-config/iso/21-usr.conf
+index 656f9706f..ff09159e3 100644
+--- a/files/secure-repart-config/iso/21-usr.conf
++++ b/files/secure-repart-config/iso/21-usr.conf
+@@ -1,5 +1,5 @@
+ [Partition]
+ Type=usr
+-Label=gnomeos_usr_%A
++Label=prosto_usr_%A
+ CopyBlocks=/mini.usr.raw
+ SplitName=usr
+diff --git a/files/secure-repart-config/main/20-usr-verity-A.conf b/files/secure-repart-config/main/20-usr-verity-A.conf
+index 8d288a11b..7e251ec20 100644
+--- a/files/secure-repart-config/main/20-usr-verity-A.conf
++++ b/files/secure-repart-config/main/20-usr-verity-A.conf
+@@ -1,6 +1,6 @@
+ [Partition]
+ Type=usr-verity
+-Label=gnomeos_usr_v_%A
++Label=prosto_usr_v_%A
+ # verity for 4G, algo sha256, block size 512 and hash size 512 is 275M
+ SizeMinBytes=275M
+ SizeMaxBytes=275M
+diff --git a/files/secure-repart-config/main/21-usr-A.conf b/files/secure-repart-config/main/21-usr-A.conf
+index 5ac56d77e..5df498e13 100644
+--- a/files/secure-repart-config/main/21-usr-A.conf
++++ b/files/secure-repart-config/main/21-usr-A.conf
+@@ -1,6 +1,6 @@
+ [Partition]
+ Type=usr
+-Label=gnomeos_usr_%A
++Label=prosto_usr_%A
+ SizeMinBytes=4G
+ SizeMaxBytes=4G
+ SplitName=usr
+diff --git a/files/secure-repart-config/main/30-usr-verity-B.conf b/files/secure-repart-config/main/30-usr-verity-B.conf
+index 82435dddb..28e1f72f2 100644
+--- a/files/secure-repart-config/main/30-usr-verity-B.conf
++++ b/files/secure-repart-config/main/30-usr-verity-B.conf
+@@ -1,6 +1,6 @@
+ [Partition]
+ Type=usr-verity
+-Label=gnomeos_usr_v_empty
++Label=prosto_usr_v_empty
+ # verity for 4G, algo sha256, block size 512 and hash size 512 is 275M
+ SizeMinBytes=275M
+ SizeMaxBytes=275M
+diff --git a/files/secure-repart-config/main/31-usr-B.conf b/files/secure-repart-config/main/31-usr-B.conf
+index b7987c155..204cf30ba 100644
+--- a/files/secure-repart-config/main/31-usr-B.conf
++++ b/files/secure-repart-config/main/31-usr-B.conf
+@@ -1,5 +1,5 @@
+ [Partition]
+ Type=usr
+-Label=gnomeos_usr_empty
++Label=prosto_usr_empty
+ SizeMinBytes=4G
+ SizeMaxBytes=4G
+diff --git a/files/secure-repart-config/mini/10-usr.conf b/files/secure-repart-config/mini/10-usr.conf
+index 9bf6448bf..a88351610 100644
+--- a/files/secure-repart-config/mini/10-usr.conf
++++ b/files/secure-repart-config/mini/10-usr.conf
+@@ -1,6 +1,6 @@
+ [Partition]
+ Type=usr
+-Label=gnomeos_usr_%A
++Label=prosto_usr_%A
+ Verity=data
+ VerityMatchKey=usr
+ CopyFiles=/usr:/
+diff --git a/files/secure-repart-config/mini/20-usr-verity.conf b/files/secure-repart-config/mini/20-usr-verity.conf
+index 78ecc6ac0..d99c57450 100644
+--- a/files/secure-repart-config/mini/20-usr-verity.conf
++++ b/files/secure-repart-config/mini/20-usr-verity.conf
+@@ -1,6 +1,6 @@
+ [Partition]
+ Type=usr-verity
+-Label=gnomeos_usr_v_%A
++Label=prosto_usr_v_%A
+ Verity=hash
+ VerityMatchKey=usr
+ SplitName=usr-verity
