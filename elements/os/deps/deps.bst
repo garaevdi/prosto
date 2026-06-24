@@ -6,8 +6,8 @@ depends:
 - system/meta.bst
 - libs/meta.bst
 
-# - gnome-build-meta.bst:core/systemd-presets.bst
-# - gnome-build-meta.bst:gnomeos-deps/preset-all.bst
+- system/systemd-presets.bst
+- gnome-build-meta.bst:gnomeos-deps/preset-all.bst
 
 - gnome-build-meta.bst:freedesktop-sdk.bst:components/xdg-desktop-portal.bst
 - gnome-build-meta.bst:core-deps/xdg-desktop-portal-gtk.bst
@@ -18,7 +18,8 @@ depends:
 # - gnome-build-meta.bst:gnomeos-deps/flathub-config.bst
 - gnome-build-meta.bst:gnomeos-deps/journald-config.bst
 - gnome-build-meta.bst:gnomeos-deps/nm-connectivity-config.bst
-- gnome-build-meta.bst:gnomeos-deps/plymouth-gnome-theme.bst
+# - gnome-build-meta.bst:gnomeos-deps/plymouth-gnome-theme.bst
+- system/plymouth-theme.bst
 - gnome-build-meta.bst:gnomeos-deps/spice-vdagent.bst
 - gnome-build-meta.bst:gnomeos-deps/wpa-supplicant-config.bst
 - gnome-build-meta.bst:gnomeos-deps/sysupdate-config.bst
