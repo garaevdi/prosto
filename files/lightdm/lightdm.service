@@ -1,0 +1,41 @@
+[Unit]
+Description=Light Display Manager
+Documentation=man:lightdm(1)
+
+# Replaces getty.
+Conflicts=getty@tty1.service
+After=getty@tty1.service
+
+# Replaces plymouth-quit since it quits plymouth on its own.
+Conflicts=plymouth-quit.service
+After=plymouth-quit.service
+
+# We need all the dependencies of the services we are replacing.
+# Pulled from getty@.service and plymouth-quit.service (except
+# for plymouth-quit-wait.service since it waits until plymouth
+# is quit, which we do).
+# bug #2167386: Avoid X rejecting connections from processes started with a different host name
+# than the one X itself was started with.
+After=rc-local.service plymouth-start.service systemd-user-sessions.service livesys-late.service systemd-hostnamed.service
+
+# We need DBus to be present.
+Requires=dbus.service
+
+# We need the DBus socket and user slice to be present.
+Wants=dbus.socket user.slice
+After=dbus.socket user.slice
+
+# LighDM takes responsibility for stopping plymouth, so if it fails
+# for any reason, make sure plymouth still stops.
+OnFailure=plymouth-quit.service
+
+[Service]
+Type=dbus
+ExecStart=/usr/sbin/lightdm
+Restart=always
+IgnoreSIGPIPE=no
+BusName=org.freedesktop.DisplayManager
+LimitMEMLOCK=16777216
+
+[Install]
+Alias=display-manager.service

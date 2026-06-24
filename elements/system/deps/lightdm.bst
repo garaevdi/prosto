@@ -5,6 +5,18 @@ sources:
   url: github:ubuntu/lightdm.git
   track: '*.*.*'
   ref: 1.32.0-0-g4b10d07b7bf87668a245b438b5ffc82e3956bd1c
+- kind: local
+  path: 'files/lightdm/lightdm.pam'
+- kind: local
+  path: 'files/lightdm/lightdm.rules'
+- kind: local
+  path: 'files/lightdm/lightdm.service'
+- kind: local
+  path: 'files/lightdm/lightdm-sysusers.conf'
+- kind: local
+  path: 'files/lightdm/lightdm-autologin.pam'
+- kind: local
+  path: 'files/lightdm/lightdm-tmpfiles.conf'
 
 build-depends:
 - gnome-build-meta.bst:sdk/vala.bst
@@ -27,3 +39,23 @@ depends:
 variables:
   conf-global: |
     --disable-static --disable-silent-rules --enable-gtk-doc --enable-libaudit --enable-introspection
+
+# These files was taken from fedora's package
+config:
+  install-commands:
+    (>):
+    - mkdir -p %{install-root}%{sysconfdir}/pam.d
+    - install -Dm644 -t %{install-root}%{sysconfdir}/pam.d lightdm.pam
+    - install -Dm644 -t %{install-root}%{sysconfdir}/pam.d lightdm-autologin.pam
+
+    - mkdir -p %{install-root}%{prefix}/lib/tmpfiles.d
+    - install -Dm644 -t %{install-root}%{prefix}/lib/tmpfiles.d lightdm-tmpfiles.conf
+
+    - mkdir -p %{install-root}%{prefix}/lib/sysusers.d
+    - install -Dm644 -t %{install-root}%{prefix}/lib/sysusers.d lightdm-sysusers.conf
+
+    - mkdir -p %{install-root}%{prefix}/lib/systemd/system
+    - install -Dm644 -t %{install-root}%{prefix}/lib/systemd/system lightdm.service
+
+    - mkdir -p %{install-root}%{datadir}/polkit-1/rules.d
+    - install -Dm644 -t %{install-root}%{datadir}/polkit-1/rules.d lightdm.rules
